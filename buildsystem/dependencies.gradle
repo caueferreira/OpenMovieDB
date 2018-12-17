@@ -1,0 +1,26 @@
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        maven { url "https://jitpack.io" }
+    }
+}
+
+ext {
+    supportLibrary = '28.0.0'
+
+    junit = '4.12'
+    runner = '1.0.2'
+    espresso = '3.0.2'
+
+    commonDependencies = [
+            kotlinStdlib : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}",
+            supportAppCompatV7   : "com.android.support:appcompat-v7:${supportLibrary}"
+    ]
+
+    commonTestDependencies = [
+            junit                        : "junit:junit:${junit}",
+            runner                       : "com.android.support.test:runner:${runner}",
+            espresso                     : "com.android.support.test.espresso:espresso-core:${espresso}"
+    ]
+}
