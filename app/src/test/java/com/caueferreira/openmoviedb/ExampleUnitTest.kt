@@ -1,4 +1,4 @@
-package com.caueferreira.openmoivedb
+package com.caueferreira.openmoviedb
 
 import org.junit.Test
 
