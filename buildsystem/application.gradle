@@ -1,6 +1,6 @@
 ext {
     app = [
-            applicationId            : "com.caueferreira.openmoivedb",
+            applicationId            : "com.caueferreira.openmoviedb",
             testInstrumentationRunner: "android.support.test.runner.AndroidJUnitRunner",
             versionCode              : 1,
             versionName              : "1.0"
