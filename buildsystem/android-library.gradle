@@ -1,0 +1,32 @@
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    def androidVersions = rootProject.ext.android
+    def application = rootProject.ext.app
+
+    compileSdkVersion androidVersions.compileSdkVersion
+    buildToolsVersion androidVersions.buildToolsVersion
+
+    defaultConfig {
+        testInstrumentationRunner application.testInstrumentationRunner
+        versionCode application.versionCode
+        versionName application.versionName
+
+
+        minSdkVersion androidVersions.minSdkVersion
+        targetSdkVersion androidVersions.targetSdkVersion
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
