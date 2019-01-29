@@ -17,6 +17,7 @@ ext {
     junit = '4.12'
     runner = '1.0.2'
     espresso = '3.0.2'
+    mockito = '2.8.9'
 
     commonDependencies = [
             kotlinStdlib : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}",
@@ -31,6 +32,7 @@ ext {
     commonTestDependencies = [
             junit                        : "junit:junit:${junit}",
             runner                       : "com.android.support.test:runner:${runner}",
-            espresso                     : "com.android.support.test.espresso:espresso-core:${espresso}"
+            espresso                     : "com.android.support.test.espresso:espresso-core:${espresso}",
+            mockito                      : "org.mockito:mockito-core:${mockito}",
     ]
 }
