@@ -20,6 +20,10 @@ class CacheTest {
         TestObject("z")
     )
 
+    private val x = dummyArray[0]
+    private val y = dummyArray[1]
+    private val z = dummyArray[2]
+
     @Mock
     private lateinit var timeUtils: TimeUtils
     private val lifespan = TimeUnit.MINUTES.toMillis(oneMillisecond)
@@ -37,7 +41,7 @@ class CacheTest {
 
     @Test
     fun singleNotFound() {
-        cache.get(dummyArray[0].id).test().assertNoValues()
+        cache.get(x.id).test().assertNoValues()
     }
 
     @Test
@@ -57,20 +61,20 @@ class CacheTest {
     @Test
     fun putSingleObject() {
         CacheBuilder()
-            .add(dummyArray[0])
+            .add(x)
 
-        cache.get(dummyArray[0].id).test().assertValue(dummyArray[0])
+        cache.get(x.id).test().assertValue(x)
     }
 
     @Test
     fun putManyObject() {
         CacheBuilder()
-            .add(dummyArray[0])
-            .add(dummyArray[1])
-            .add(dummyArray[2])
+            .add(x)
+            .add(y)
+            .add(z)
 
-        cache.getAll().test().assertValue(dummyArray)
-        cache.getAll().test().assertValue { it.size == dummyArray.size }
+        cache.getAll().test().assertValue(arrayListOf(x, y, z))
+        cache.getAll().test().assertValue { it.size == 3 }
     }
 
     @Test
@@ -87,37 +91,37 @@ class CacheTest {
         CacheBuilder()
             .addAll(dummyArray)
 
-        cache.get(dummyArray[1].id).test().assertValue(dummyArray[1])
+        cache.get(y.id).test().assertValue(y)
     }
 
     @Test
     fun searchingWrongObject() {
         CacheBuilder()
-            .add(dummyArray[1])
+            .add(y)
 
-        cache.get(dummyArray[0].id).test().assertNoValues()
+        cache.get(x.id).test().assertNoValues()
     }
 
     @Test
     fun retrieveWhenSingleValueExpired() {
         CacheBuilder()
-            .addAtTime(dummyArray[0], oneMillisecond)
-            .nextCallTime(oneMillisecond * 10 + lifespan)
+            .addAtTime(x, oneMillisecond)
+            .nextCallTime(oneMillisecond + lifespan)
 
         cache.getAll().test().assertNoValues()
-        cache.get(dummyArray[0].id).test().assertNoValues()
+        cache.get(x.id).test().assertNoValues()
     }
 
     @Test
     fun retrieveWhenSomeValuesAreExpired() {
         CacheBuilder()
-            .addAtTime(dummyArray[0], oneMillisecond)
-            .addAtTime(dummyArray[1], oneMillisecond * 10)
-            .addAtTime(dummyArray[2], oneMillisecond * 20)
+            .addAtTime(x, oneMillisecond)
+            .addAtTime(y, oneMillisecond * 10)
+            .addAtTime(z, oneMillisecond * 20)
             .nextCallTime(oneMillisecond * 10 + lifespan)
 
-        cache.getAll().test().assertValue(arrayListOf(dummyArray[2]))
-        cache.getAll().test().assertValue { it.size == dummyArray.size - 2 }
+        cache.getAll().test().assertValue(arrayListOf(z))
+        cache.getAll().test().assertValue { it.size == 1 }
     }
 
     @Test
