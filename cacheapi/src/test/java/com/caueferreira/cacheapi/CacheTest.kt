@@ -15,14 +15,14 @@ class CacheTest {
     private val oneMillisecond = 1L
 
     private val dummyArray = arrayListOf(
+        TestObject("z"),
         TestObject("x"),
-        TestObject("y"),
-        TestObject("z")
+        TestObject("y")
     )
 
-    private val x = dummyArray[0]
-    private val y = dummyArray[1]
-    private val z = dummyArray[2]
+    private val z = dummyArray[0]
+    private val x = dummyArray[1]
+    private val y = dummyArray[2]
 
     @Mock
     private lateinit var timeUtils: TimeUtils
@@ -69,11 +69,11 @@ class CacheTest {
     @Test
     fun putManyObject() {
         CacheBuilder()
-            .add(x)
             .add(y)
+            .add(x)
             .add(z)
 
-        cache.getAll().test().assertValue(arrayListOf(x, y, z))
+        cache.getAll().test().assertValue { it.containsAll(arrayListOf(y, x, z)) }
         cache.getAll().test().assertValue { it.size == 3 }
     }
 
@@ -82,7 +82,7 @@ class CacheTest {
         CacheBuilder()
             .addAll(dummyArray)
 
-        cache.getAll().test().assertValue(dummyArray)
+        cache.getAll().test().assertValue { it.containsAll(dummyArray) }
         cache.getAll().test().assertValue { it.size == dummyArray.size }
     }
 
@@ -116,8 +116,8 @@ class CacheTest {
     fun retrieveWhenSomeValuesAreExpired() {
         CacheBuilder()
             .addAtTime(x, oneMillisecond)
-            .addAtTime(y, oneMillisecond * 10)
             .addAtTime(z, oneMillisecond * 20)
+            .addAtTime(y, oneMillisecond * 10)
             .nextCallTime(oneMillisecond * 10 + lifespan)
 
         cache.getAll().test().assertValue(arrayListOf(z))
