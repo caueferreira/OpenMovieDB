@@ -29,7 +29,7 @@ class CacheTest {
     private val lifespan = TimeUnit.MINUTES.toMillis(oneMillisecond)
 
     @Before
-    fun setup() {
+    fun `before each test`() {
         MockitoAnnotations.initMocks(this)
         cache = Cache(
             Function { it.id },
@@ -40,17 +40,17 @@ class CacheTest {
     }
 
     @Test
-    fun singleNotFound() {
+    fun `search single value when none is present`() {
         cache.get(x.id).test().assertNoValues()
     }
 
     @Test
-    fun getAllWhenIsEmpty() {
+    fun `search all values when none is present`() {
         cache.getAll().test().assertNoValues()
     }
 
     @Test
-    fun clearRemovesAll() {
+    fun `add values then remove all values`() {
         CacheBuilder()
             .addAll(dummyArray)
             .clear()
@@ -59,7 +59,7 @@ class CacheTest {
     }
 
     @Test
-    fun putSingleObject() {
+    fun `add single value`() {
         CacheBuilder()
             .add(x)
 
@@ -67,7 +67,7 @@ class CacheTest {
     }
 
     @Test
-    fun putManyObject() {
+    fun `add many values`() {
         CacheBuilder()
             .add(y)
             .add(x)
@@ -78,7 +78,7 @@ class CacheTest {
     }
 
     @Test
-    fun putAllObjects() {
+    fun `add array of values`() {
         CacheBuilder()
             .addAll(dummyArray)
 
@@ -87,7 +87,7 @@ class CacheTest {
     }
 
     @Test
-    fun findSingleObject() {
+    fun `add array of values and search single`() {
         CacheBuilder()
             .addAll(dummyArray)
 
@@ -95,7 +95,7 @@ class CacheTest {
     }
 
     @Test
-    fun searchingWrongObject() {
+    fun `add a value and search for another that is not present`() {
         CacheBuilder()
             .add(y)
 
@@ -103,7 +103,7 @@ class CacheTest {
     }
 
     @Test
-    fun retrieveWhenSingleValueExpired() {
+    fun `add a value and search when it is expired`() {
         CacheBuilder()
             .addAtTime(x, oneMillisecond)
             .nextCallTime(oneMillisecond + lifespan)
@@ -113,7 +113,7 @@ class CacheTest {
     }
 
     @Test
-    fun retrieveWhenSomeValuesAreExpired() {
+    fun `add many values and search all when two are expired`() {
         CacheBuilder()
             .addAtTime(x, oneMillisecond)
             .addAtTime(z, oneMillisecond * 20)
@@ -125,7 +125,7 @@ class CacheTest {
     }
 
     @Test
-    fun retrieveWhenAllValuesAreExpired() {
+    fun `add array of values and search when all are expired`() {
         CacheBuilder()
             .addAll(dummyArray)
             .nextCallTime(System.currentTimeMillis() + lifespan)
