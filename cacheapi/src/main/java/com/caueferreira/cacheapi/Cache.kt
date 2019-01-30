@@ -2,6 +2,7 @@ package com.caueferreira.cacheapi
 
 import io.reactivex.Maybe
 import io.reactivex.Observable
+import io.reactivex.Scheduler
 import io.reactivex.annotations.NonNull
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.ConcurrentHashMap
@@ -12,7 +13,8 @@ import java.util.concurrent.TimeUnit
 class Cache<Key, Value>(
     @NonNull private val extractKey: Function<Value, Key>,
     @NonNull private val timeUtils: TimeUtils,
-    private val lifespan: Long = TimeUnit.MINUTES.toMillis(5)
+    private val lifespan: Long = TimeUnit.MINUTES.toMillis(5),
+    private val scheduler: Scheduler = Schedulers.computation()
 ) :
     CacheInterface<Key, Value> {
 
@@ -20,7 +22,7 @@ class Cache<Key, Value>(
 
     override fun put(@NonNull value: Value) {
         Observable.just(value)
-            .subscribeOn(Schedulers.computation())
+            .subscribeOn(scheduler)
             .subscribe { it -> cache[extractKey.apply(it)] = createEntry(it) }
     }
 
@@ -29,7 +31,7 @@ class Cache<Key, Value>(
         Observable.fromIterable(values)
             .toMap(extractKey,
                 Function<Value, CacheEntry<Value>> { createEntry(it) })
-            .subscribeOn(Schedulers.computation())
+            .subscribeOn(scheduler)
             .subscribe(cache::putAll)
     }
 
@@ -43,7 +45,7 @@ class Cache<Key, Value>(
             .map { it.value }
             .toList()
             .filter { !it.isEmpty() }
-            .subscribeOn(Schedulers.computation())
+            .subscribeOn(scheduler)
     }
 
     override fun get(@NonNull key: Key): Maybe<Value> {
@@ -52,7 +54,7 @@ class Cache<Key, Value>(
             .map { cache[key] }
             .filter(::isExpired)
             .map { it.value }
-            .subscribeOn(Schedulers.computation())
+            .subscribeOn(scheduler)
     }
 
     @NonNull

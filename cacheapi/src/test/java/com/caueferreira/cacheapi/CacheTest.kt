@@ -1,13 +1,13 @@
 package com.caueferreira.cacheapi
 
+import com.nhaarman.mockitokotlin2.whenever
 import io.reactivex.functions.Function
+import io.reactivex.schedulers.Schedulers
 import org.junit.Before
-import org.junit.ClassRule
 import org.junit.Test
 import org.mockito.Mock
-import java.util.concurrent.TimeUnit
-import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
+import java.util.concurrent.TimeUnit
 
 class CacheTest {
 
@@ -24,16 +24,15 @@ class CacheTest {
     private lateinit var timeUtils: TimeUtils
     private val lifespan = TimeUnit.MINUTES.toMillis(oneMillisecond)
 
-    companion object {
-        @ClassRule
-        @JvmField
-        val schedulers = RxImmediateSchedulerRule()
-    }
-
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        cache = Cache(Function { it.id }, lifespan = lifespan, timeUtils = timeUtils)
+        cache = Cache(
+            Function { it.id },
+            lifespan = lifespan,
+            timeUtils = timeUtils,
+            scheduler = Schedulers.trampoline()
+        )
     }
 
     @Test
@@ -42,7 +41,7 @@ class CacheTest {
     }
 
     @Test
-    fun noneFound() {
+    fun getAllWhenIsEmpty() {
         cache.getAll().test().assertNoValues()
     }
 
@@ -52,11 +51,6 @@ class CacheTest {
             .addAll(dummyArray)
             .clear()
 
-        cache.getAll().test().assertNoValues()
-    }
-
-    @Test
-    fun getAllWhenIsEmpty() {
         cache.getAll().test().assertNoValues()
     }
 
@@ -161,7 +155,7 @@ class CacheTest {
         }
 
         fun nextCallTime(time: Long): CacheBuilder {
-            `when`(timeUtils.milliseconds()).thenReturn(time)
+            whenever(timeUtils.milliseconds()).thenReturn(time)
             return this
         }
     }

@@ -11,7 +11,6 @@ dependencies {
 
     api commonDependencies.rxJava2
     api commonDependencies.rxAndroid
-    api commonDependencies.options
 
     testImplementation commonTestDependencies.junit
     testImplementation commonTestDependencies.mockito
