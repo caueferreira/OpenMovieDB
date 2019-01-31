@@ -1,0 +1,24 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply from: '../buildsystem/android-library.gradle'
+
+dependencies {
+    def commonDependencies = rootProject.ext.commonDependencies
+    def commonTestDependencies = rootProject.ext.commonTestDependencies
+
+    implementation commonDependencies.kotlinStdlib
+    implementation commonDependencies.supportAppCompatV7
+
+    api commonDependencies.rxJava2
+    api commonDependencies.rxAndroid
+
+    testImplementation commonTestDependencies.junit
+    testImplementation commonTestDependencies.mockito
+
+    androidTestImplementation commonTestDependencies.runner
+    androidTestImplementation commonTestDependencies.espresso
+}
+
+repositories {
+    mavenCentral()
+}
