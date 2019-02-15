@@ -5,4 +5,8 @@ ext {
             targetSdkVersion : 28,
             compileSdkVersion: 28
     ]
+
+    endpoints = [
+            themoviedatabase_endpoint_url = "\"https://api.themoviedb.org/3/\""
+    ]
 }

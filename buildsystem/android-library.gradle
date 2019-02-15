@@ -16,6 +16,8 @@ android {
 
         minSdkVersion androidVersions.minSdkVersion
         targetSdkVersion androidVersions.targetSdkVersion
+
+        buildConfigField "String", "THEMOVIEDATABASE_URL", themoviedatabase_endpoint_url
     }
 
     buildTypes {
