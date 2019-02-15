@@ -35,23 +35,22 @@ class Cache<K, V>(
         cache.clear()
     }
 
-    override fun getAll(): Maybe<List<V>> {
-        return Observable.fromIterable(cache.values)
-            .filter(::isExpired)
-            .map { it.value }
-            .toList()
-            .filter { it.isNotEmpty() }
-            .subscribeOn(scheduler)
-    }
+    override fun getAll(): Maybe<List<V>> = Observable.fromIterable(cache.values)
+        .filter(::isExpired)
+        .map { it.value }
+        .toList()
+        .filter { it.isNotEmpty() }
+        .subscribeOn(scheduler)
 
-    override fun get(key: K): Maybe<V> {
-        return Maybe.fromCallable { cache.containsKey(key) }
+
+    override fun get(key: K): Maybe<V> =
+        Maybe.fromCallable { cache.containsKey(key) }
             .filter { isPresent -> isPresent }
             .map { cache[key] }
             .filter(::isExpired)
             .map { it.value }
             .subscribeOn(scheduler)
-    }
+
 
     private fun isExpired(entry: CacheEntry<V>): Boolean =
         entry.createdAt + lifespan > timeUtils.milliseconds()
