@@ -9,8 +9,6 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 
 class NetworkModule {
 
-    fun providesBaseUrl(): String = BuildConfig.THEMOVIEDATABASE_URL
-
     fun providesLoggingInterceptor() = HttpLoggingInterceptor().apply {
         when {
             BuildConfig.DEBUG -> level = HttpLoggingInterceptor.Level.BODY
@@ -18,17 +16,12 @@ class NetworkModule {
         }
     }
 
-    fun providesOkHttp(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient = OkHttpClient.Builder()
-        .addNetworkInterceptor(loggingInterceptor).build()
-
-    fun providesRetrofit(
-        okHttpClient: OkHttpClient,
-        baseUrl: String
-    ) = with(Retrofit.Builder()) {
+    fun providesRetrofit(httpLoggingInterceptor: HttpLoggingInterceptor) = with(Retrofit.Builder()) {
         addConverterFactory(MoshiConverterFactory.create())
         addCallAdapterFactory(RxJava2CallAdapterFactory.createWithScheduler(Schedulers.io()))
-        baseUrl(baseUrl)
-        client(okHttpClient)
+        baseUrl(BuildConfig.THEMOVIEDATABASE_URL)
+        client(OkHttpClient.Builder()
+            .addNetworkInterceptor(httpLoggingInterceptor).build())
         build()
     }
 }

@@ -9,4 +9,8 @@ ext {
     endpoints = [
             themoviedatabase_endpoint_url = "\"https://api.themoviedb.org/3/\""
     ]
+
+    keys = [
+            themoviedatabase_api_key = "\"$System.env.THEMOVIEDATABASE_API_KEY\""
+    ]
 }

@@ -1,5 +1,6 @@
 package com.caueferreira.network
 
+import com.google.gson.Gson
 import io.reactivex.Observable
 import io.reactivex.ObservableSource
 import io.reactivex.ObservableTransformer
@@ -23,12 +24,21 @@ sealed class NetworkHandler<T> : ObservableTransformer<T, T> {
                 Observable.error(throwable)
 
         private fun mapError(httpException: HttpException) = when (httpException.code()) {
-            401 -> NetworkErrors.Http.Unauthorized
-            404 -> NetworkErrors.Http.NotFound
-            408 -> NetworkErrors.Http.Timeout
-            429 -> NetworkErrors.Http.LimitRateSuppressed
-            in 500..599 -> NetworkErrors.Http.HorribleMistakeIsHappening
-            else -> NetworkErrors.Http.Generic
+            401 -> NetworkErrors.Http.Unauthorized(fromHttpException(httpException))
+            403, 405, 406, 422 -> NetworkErrors.Http.BadRequest(fromHttpException(httpException))
+            404 -> NetworkErrors.Http.NotFound(fromHttpException(httpException))
+            408 -> NetworkErrors.Http.Timeout(fromHttpException(httpException))
+            429 -> NetworkErrors.Http.LimitRateSuppressed(fromHttpException(httpException))
+            in 500..599 -> NetworkErrors.Http.HorribleMistakeIsHappening(fromHttpException(httpException))
+            else -> NetworkErrors.Http.Generic(fromHttpException(httpException))
+        }
+
+
+        private fun fromHttpException(httpException: HttpException): ApiErrorMessage {
+            httpException.response().errorBody()?.let {
+                return Gson().fromJson(it.string(), ApiErrorMessage::class.java)
+            }
+            return ApiErrorMessage(-1, "Unable to parse API error")
         }
     }
 

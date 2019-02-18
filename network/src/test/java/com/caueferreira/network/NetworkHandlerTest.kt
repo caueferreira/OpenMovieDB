@@ -1,6 +1,7 @@
 package com.caueferreira.network
 
 import io.reactivex.Observable
+import io.reactivex.observers.TestObserver
 import okhttp3.MediaType
 import okhttp3.ResponseBody
 import org.junit.Test
@@ -15,16 +16,10 @@ class NetworkHandlerTest {
 
     @Test
     fun `should trigger connectivity timeout errors`() {
-        val timeoutExceptions = arrayListOf(
-            SocketTimeoutException()
-        )
-
-        timeoutExceptions.forEach {
-            Observable.error<Any>(it)
-                .handleNetworkErrors()
-                .test()
-                .assertError(NetworkErrors.Connectivity.Timeout)
-        }
+        NetworkHandlerBuilder()
+            .withException(SocketTimeoutException())
+            .stream()
+            .assertError(NetworkErrors.Connectivity.Timeout)
     }
 
     @Test
@@ -38,9 +33,9 @@ class NetworkHandlerTest {
         )
 
         unreachableExceptions.forEach {
-            Observable.error<Any>(it)
-                .handleNetworkErrors()
-                .test()
+            NetworkHandlerBuilder()
+                .withException(it)
+                .stream()
                 .assertError(NetworkErrors.Connectivity.HostUnreachable)
         }
     }
@@ -54,9 +49,9 @@ class NetworkHandlerTest {
         )
 
         unreachableExceptions.forEach {
-            Observable.error<Any>(it)
-                .handleNetworkErrors()
-                .test()
+            NetworkHandlerBuilder()
+                .withException(it)
+                .stream()
                 .assertError(NetworkErrors.Connectivity.FailedConnection)
         }
     }
@@ -70,86 +65,99 @@ class NetworkHandlerTest {
         )
 
         badExceptions.forEach {
-            Observable.error<Any>(it)
-                .handleNetworkErrors()
-                .test()
+            NetworkHandlerBuilder()
+                .withException(it)
+                .stream()
                 .assertError(NetworkErrors.Connectivity.BadConnection)
         }
     }
 
     @Test
     fun `shouldn't trigger connectivity errors`() {
-        val genericExceptions = arrayListOf(
-            Exception()
-        )
-
-        genericExceptions.forEach {
-            Observable.error<Any>(it)
-                .handleNetworkErrors()
-                .test()
-                .assertFailure(Exception::class.java)
-        }
+        NetworkHandlerBuilder()
+            .withException(Exception())
+            .stream()
+            .assertFailure(Exception::class.java)
     }
 
     @Test
     fun `should trigger http unauthorized error`() {
-        Observable.error<Any>(httpException<Any>(401))
-            .handleNetworkErrors()
-            .test()
-            .assertError(NetworkErrors.Http.Unauthorized)
+        NetworkHandlerBuilder()
+            .withApiError("Unauthorized", 401)
+            .stream()
+            .assertFailure(NetworkErrors.Http.Unauthorized::class.java)
     }
 
     @Test
     fun `should trigger http not found error`() {
-        Observable.error<Any>(httpException<Any>(404))
-            .handleNetworkErrors()
-            .test()
-            .assertError(NetworkErrors.Http.NotFound)
+        NetworkHandlerBuilder()
+            .withApiError("Not Found", 404)
+            .stream()
+            .assertFailure(NetworkErrors.Http.NotFound::class.java)
+    }
+
+    @Test
+    fun `should trigger http bad request error error`() {
+        arrayOf(403, 405, 406, 422).forEach {
+            NetworkHandlerBuilder()
+                .withApiError("Bad Request", it)
+                .stream()
+                .assertFailure(NetworkErrors.Http.BadRequest::class.java)
+        }
     }
 
     @Test
     fun `should trigger http timeout error`() {
-        Observable.error<Any>(httpException<Any>(408))
-            .handleNetworkErrors()
-            .test()
-            .assertError(NetworkErrors.Http.Timeout)
+        NetworkHandlerBuilder()
+            .withApiError("Request Timeout", 408)
+            .stream()
+            .assertFailure(NetworkErrors.Http.Timeout::class.java)
     }
 
     @Test
     fun `should trigger http limit rate reached error`() {
-        Observable.error<Any>(httpException<Any>(429))
-            .handleNetworkErrors()
-            .test()
-            .assertError(NetworkErrors.Http.LimitRateSuppressed)
+        NetworkHandlerBuilder()
+            .withApiError("Request Rate Limiting Suppressed", 429)
+            .stream()
+            .assertFailure(NetworkErrors.Http.LimitRateSuppressed::class.java)
     }
 
     @Test
     fun `should trigger http horrible mistake error`() {
-        Observable.error<Any>(httpException<Any>(500))
-            .handleNetworkErrors()
-            .test()
-            .assertError(NetworkErrors.Http.HorribleMistakeIsHappening)
+        NetworkHandlerBuilder()
+            .withApiError("D'oh", 500)
+            .stream()
+            .assertFailure(NetworkErrors.Http.HorribleMistakeIsHappening::class.java)
     }
 
     @Test
     fun `should trigger http generic error`() {
-        Observable.error<Any>(httpException<Any>(666))
-            .handleNetworkErrors()
-            .test()
-            .assertError(NetworkErrors.Http.Generic)
+        NetworkHandlerBuilder()
+            .withApiError("Never gonna happen", 666)
+            .stream()
+            .assertFailure(NetworkErrors.Http.Generic::class.java)
     }
 
-    @Test
-    fun `shouldn't trigger http error`() {
-        Observable.error<Any>(Exception())
-            .handleNetworkErrors()
-            .test()
-            .assertFailure(Exception::class.java)
-    }
+    private inner class NetworkHandlerBuilder {
+        private lateinit var stream: Observable<Any>
 
-    private fun <T> httpException(statusCode: Int): HttpException {
-        val jsonMediaType = MediaType.parse("application/json")
-        val body = ResponseBody.create(jsonMediaType, "error message")
-        return HttpException(Response.error<T>(statusCode, body))
+        fun stream(): TestObserver<Any> = stream.handleNetworkErrors().test()
+
+        fun withException(throwable: Throwable): NetworkHandlerBuilder {
+            stream = Observable.error(throwable)
+            return this
+        }
+
+        fun withApiError(message: String, statusCode: Int): NetworkHandlerBuilder {
+            val apiMessage = """{"code":$statusCode ,"message": "$message"}"""
+            stream = Observable.error(httpException<Any>(apiMessage, statusCode))
+            return this
+        }
+
+        private fun <T> httpException(message: String, statusCode: Int): HttpException {
+            val jsonMediaType = MediaType.parse("application/json")
+            val body = ResponseBody.create(jsonMediaType, message)
+            return HttpException(Response.error<T>(statusCode, body))
+        }
     }
 }
