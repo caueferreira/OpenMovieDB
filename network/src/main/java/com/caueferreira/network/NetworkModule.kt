@@ -16,12 +16,14 @@ class NetworkModule {
         }
     }
 
-    fun providesRetrofit(httpLoggingInterceptor: HttpLoggingInterceptor) = with(Retrofit.Builder()) {
+    fun providesOkHttp(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient = OkHttpClient.Builder()
+        .addNetworkInterceptor(loggingInterceptor).build()
+
+    fun providesRetrofit(okHttpClient: OkHttpClient) = with(Retrofit.Builder()) {
         addConverterFactory(MoshiConverterFactory.create())
         addCallAdapterFactory(RxJava2CallAdapterFactory.createWithScheduler(Schedulers.io()))
         baseUrl(BuildConfig.THEMOVIEDATABASE_URL)
-        client(OkHttpClient.Builder()
-            .addNetworkInterceptor(httpLoggingInterceptor).build())
+        client(okHttpClient).build()
         build()
     }
 }
