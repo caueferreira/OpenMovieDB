@@ -5,4 +5,12 @@ ext {
             targetSdkVersion : 28,
             compileSdkVersion: 28
     ]
+
+    endpoints = [
+            themoviedatabase_endpoint_url = "\"https://api.themoviedb.org/3/\""
+    ]
+
+    keys = [
+            themoviedatabase_api_key = "\"$System.env.THEMOVIEDATABASE_API_KEY\""
+    ]
 }

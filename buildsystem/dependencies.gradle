@@ -11,6 +11,10 @@ ext {
 
     rxJava2 = '2.x.x'
     rxAndroid = '2.1.0'
+    retrofit2 = '2.4.0'
+    okHttp = '3.8.0'
+    dagger2 = '2.16'
+    gson = '2.8.1'
 
     junit = '4.12'
     runner = '1.0.2'
@@ -22,7 +26,17 @@ ext {
             supportAppCompatV7   : "com.android.support:appcompat-v7:${supportLibrary}",
 
             rxJava2              : "io.reactivex.rxjava2:rxjava:${rxJava2}",
-            rxAndroid            : "io.reactivex.rxjava2:rxandroid:${rxAndroid}"
+            rxAndroid            : "io.reactivex.rxjava2:rxandroid:${rxAndroid}",
+
+            okHttp               : "com.squareup.okhttp3:okhttp:${okHttp}",
+            okHttpInterceptor    : "com.squareup.okhttp3:logging-interceptor:${okHttp}",
+
+            retrofit2            : "com.squareup.retrofit2:retrofit:${retrofit2}",
+            retrofitRxAdapter    : "com.squareup.retrofit2:adapter-rxjava2:${retrofit2}",
+            retrofitConverter    : "com.squareup.retrofit2:converter-gson:${retrofit2}",
+            moshi                : "com.squareup.retrofit2:converter-moshi:${retrofit2}",
+
+            gson                 : "com.google.code.gson:gson:${gson}"
     ]
 
     commonTestDependencies = [
