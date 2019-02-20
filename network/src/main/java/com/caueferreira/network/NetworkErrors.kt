@@ -7,7 +7,7 @@ sealed class NetworkErrors : Throwable() {
         data class NotFound(val apiErrorMessage: ApiErrorMessage) : Http()
         data class Timeout(val apiErrorMessage: ApiErrorMessage) : Http()
         data class LimitRateSuppressed(val apiErrorMessage: ApiErrorMessage) : Http()
-        data class HorribleMistakeIsHappening(val apiErrorMessage: ApiErrorMessage) : Http()
+        data class InternalServerError(val apiErrorMessage: ApiErrorMessage) : Http()
         data class BadRequest(val apiErrorMessage: ApiErrorMessage) : Http()
         data class Generic(val apiErrorMessage: ApiErrorMessage) : Http()
     }
