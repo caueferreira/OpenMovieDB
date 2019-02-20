@@ -17,7 +17,7 @@ jobs:
 #         command: sudo chmod +x ./gradlew
       - run:
           name: Download Dependencies
-#          command: ./gradlew androidDependencies testDebugUnitTest createDebugCoverageReport
+          command: ./gradlew androidDependencies #testDebugUnitTest createDebugCoverageReport
       - save_cache:
           paths:
             - ~/.gradle
