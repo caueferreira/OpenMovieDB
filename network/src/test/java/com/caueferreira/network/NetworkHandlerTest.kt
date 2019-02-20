@@ -123,11 +123,11 @@ class NetworkHandlerTest {
     }
 
     @Test
-    fun `should trigger http horrible mistake error`() {
+    fun `should trigger http internal server error`() {
         NetworkHandlerBuilder()
             .withApiError("D'oh", 500)
             .stream()
-            .assertFailure(NetworkErrors.Http.HorribleMistakeIsHappening::class.java)
+            .assertFailure(NetworkErrors.Http.InternalServerError::class.java)
     }
 
     @Test
