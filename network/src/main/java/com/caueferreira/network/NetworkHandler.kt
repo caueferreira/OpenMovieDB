@@ -29,7 +29,7 @@ sealed class NetworkHandler<T> : ObservableTransformer<T, T> {
             404 -> NetworkErrors.Http.NotFound(fromHttpException(httpException))
             408 -> NetworkErrors.Http.Timeout(fromHttpException(httpException))
             429 -> NetworkErrors.Http.LimitRateSuppressed(fromHttpException(httpException))
-            in 500..599 -> NetworkErrors.Http.HorribleMistakeIsHappening(fromHttpException(httpException))
+            in 500..599 -> NetworkErrors.Http.InternalServerError(fromHttpException(httpException))
             else -> NetworkErrors.Http.Generic(fromHttpException(httpException))
         }
 
