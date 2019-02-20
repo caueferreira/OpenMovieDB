@@ -1,5 +1,6 @@
 # OpenMovieDB
 
+[![CircleCI](https://circleci.com/gh/caueferreira/OpenMovieDB.svg?style=svg)](https://circleci.com/gh/caueferreira/OpenMovieDB)
 
 ## Getting Started
 
