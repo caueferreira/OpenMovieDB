@@ -17,7 +17,7 @@ jobs:
 #         command: sudo chmod +x ./gradlew
       - run:
           name: Download Dependencies
-          command: ./gradlew androidDependencies testDebugUnitTest createDebugCoverageReport
+#          command: ./gradlew androidDependencies testDebugUnitTest createDebugCoverageReport
       - save_cache:
           paths:
             - ~/.gradle
@@ -31,5 +31,5 @@ jobs:
       - store_test_results: # for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
           path: app/build/test-results
       # See https://circleci.com/docs/2.0/deployment-integrations/ for deploy examples
-      - codecov/upload:
-          file: coverage/*.json
+#      - codecov/upload:
+#          file: coverage/*.json
