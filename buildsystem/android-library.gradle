@@ -24,6 +24,7 @@ android {
     buildTypes {
         debug {
             minifyEnabled false
+            testCoverageEnabled true
         }
         
         release {
@@ -32,4 +33,7 @@ android {
         }
     }
 
+    jacoco {
+        version = '0.8.2'
+    }
 }
