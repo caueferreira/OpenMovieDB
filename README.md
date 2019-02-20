@@ -1,7 +1,6 @@
 # OpenMovieDB
 
 [![CircleCI](https://circleci.com/gh/caueferreira/OpenMovieDB.svg?style=svg)](https://circleci.com/gh/caueferreira/OpenMovieDB)
-[![codecov](https://codecov.io/gh/caueferreira/OpenMovieDB/branch/master/graph/badge.svg)](https://codecov.io/gh/caueferreira/OpenMovieDB)
 
 ## Getting Started
 
