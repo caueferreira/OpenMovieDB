@@ -98,7 +98,7 @@ class NetworkHandlerTest {
 
     @Test
     fun `should trigger http bad request error error`() {
-        arrayOf(403, 405, 406, 422).forEach {
+        arrayOf(400, 403, 405, 406, 422).forEach {
             NetworkHandlerBuilder()
                 .withApiError("Bad Request", it)
                 .stream()

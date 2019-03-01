@@ -25,7 +25,7 @@ sealed class NetworkHandler<T> : ObservableTransformer<T, T> {
 
         private fun mapError(httpException: HttpException) = when (httpException.code()) {
             401 -> NetworkErrors.Http.Unauthorized(fromHttpException(httpException))
-            403, 405, 406, 422 -> NetworkErrors.Http.BadRequest(fromHttpException(httpException))
+            400, 403, 405, 406, 422 -> NetworkErrors.Http.BadRequest(fromHttpException(httpException))
             404 -> NetworkErrors.Http.NotFound(fromHttpException(httpException))
             408 -> NetworkErrors.Http.Timeout(fromHttpException(httpException))
             429 -> NetworkErrors.Http.LimitRateSuppressed(fromHttpException(httpException))
