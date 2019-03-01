@@ -2,6 +2,7 @@ package com.caueferreira.cacheapi
 
 import com.nhaarman.mockitokotlin2.whenever
 import io.reactivex.functions.Function
+import io.reactivex.observers.TestObserver
 import io.reactivex.schedulers.Schedulers
 import org.junit.Before
 import org.junit.Test
@@ -12,28 +13,27 @@ import java.util.concurrent.TimeUnit
 class CacheTest {
 
     private lateinit var cache: Cache<String, TestObject>
-    private val oneMillisecond = 1L
+    private val lifespanSeconds = 5L
 
-    private val dummyArray = arrayListOf(
+    private val zxy = arrayListOf(
         TestObject("z"),
         TestObject("x"),
         TestObject("y")
     )
 
-    private val z = dummyArray[0]
-    private val x = dummyArray[1]
-    private val y = dummyArray[2]
+    private val z = zxy[0]
+    private val x = zxy[1]
+    private val y = zxy[2]
 
     @Mock
     private lateinit var timeUtils: TimeUtils
-    private val lifespan = TimeUnit.MINUTES.toMillis(oneMillisecond)
 
     @Before
     fun `before each test`() {
         MockitoAnnotations.initMocks(this)
         cache = Cache(
             Function { it.id },
-            lifespan = lifespan,
+            lifespan = TimeUnit.SECONDS.toMillis(lifespanSeconds),
             timeUtils = timeUtils,
             scheduler = Schedulers.trampoline()
         )
@@ -41,126 +41,149 @@ class CacheTest {
 
     @Test
     fun `search single value when none is present`() {
-        cache.get(x.id).test().assertNoValues()
+        CacheBuilder()
+            .thenSingle(x.id)
+            .assertNoValues()
     }
 
     @Test
     fun `search all values when none is present`() {
-        cache.getAll().test().assertNoValues()
+        CacheBuilder()
+            .thenAll()
+            .assertNoValues()
     }
 
     @Test
     fun `add values then remove all values`() {
         CacheBuilder()
-            .addAll(dummyArray)
-            .clear()
-
-        cache.getAll().test().assertNoValues()
+            .withValues(zxy)
+            .withoutValues()
+            .thenAll()
+            .assertNoValues()
     }
 
     @Test
     fun `add single value`() {
         CacheBuilder()
-            .add(x)
-
-        cache.get(x.id).test().assertValue(x)
+            .withValue(x)
+            .thenSingle(x.id)
+            .assertValueCount(1)
+            .assertValue(x)
     }
 
     @Test
     fun `add many values`() {
         CacheBuilder()
-            .add(y)
-            .add(x)
-            .add(z)
-
-        cache.getAll().test().assertValue { it.containsAll(arrayListOf(y, x, z)) }
-        cache.getAll().test().assertValue { it.size == 3 }
+            .withValue(y)
+            .withValue(x)
+            .withValue(z)
+            .thenAll()
+            .assertValueCount(1)
+            .values()
+            .contains(zxy)
     }
 
     @Test
     fun `add array of values`() {
         CacheBuilder()
-            .addAll(dummyArray)
-
-        cache.getAll().test().assertValue { it.containsAll(dummyArray) }
-        cache.getAll().test().assertValue { it.size == dummyArray.size }
+            .withValues(zxy)
+            .thenAll()
+            .assertValueCount(1)
+            .values()
+            .contains(zxy)
     }
 
     @Test
     fun `add array of values and search single`() {
         CacheBuilder()
-            .addAll(dummyArray)
-
-        cache.get(y.id).test().assertValue(y)
+            .withValues(zxy)
+            .thenSingleAt(y.id, lifespanSeconds, TimeUnit.SECONDS)
+            .assertValueCount(1)
+            .assertValue(y)
     }
 
     @Test
     fun `add a value and search for another that is not present`() {
         CacheBuilder()
-            .add(y)
-
-        cache.get(x.id).test().assertNoValues()
+            .withValue(y)
+            .thenSingle(x.id)
+            .assertNoValues()
     }
 
     @Test
     fun `add a value and search when it is expired`() {
         CacheBuilder()
-            .addAtTime(x, oneMillisecond)
-            .nextCallTime(oneMillisecond + lifespan)
-
-        cache.getAll().test().assertNoValues()
-        cache.get(x.id).test().assertNoValues()
+            .withValueAt(x, 1, TimeUnit.SECONDS)
+            .thenAllAt(lifespanSeconds + 2, TimeUnit.SECONDS)
+            .assertNoValues()
     }
 
     @Test
     fun `add many values and search all when two are expired`() {
         CacheBuilder()
-            .addAtTime(x, oneMillisecond)
-            .addAtTime(z, oneMillisecond * 20)
-            .addAtTime(y, oneMillisecond * 10)
-            .nextCallTime(oneMillisecond * 10 + lifespan)
-
-        cache.getAll().test().assertValue(arrayListOf(z))
-        cache.getAll().test().assertValue { it.size == 1 }
+            .withValueAt(x, 1, TimeUnit.SECONDS)
+            .withValueAt(z, 20, TimeUnit.SECONDS)
+            .withValueAt(y, 10, TimeUnit.SECONDS)
+            .thenAllAt(lifespanSeconds + 11, TimeUnit.SECONDS)
+            .assertValueCount(1)
+            .assertValue(arrayListOf(z))
     }
 
     @Test
     fun `add array of values and search when all are expired`() {
         CacheBuilder()
-            .addAll(dummyArray)
-            .nextCallTime(System.currentTimeMillis() + lifespan)
-
-        cache.getAll().test().assertNoValues()
+            .withValues(zxy)
+            .thenAllAt(lifespanSeconds + 1, TimeUnit.SECONDS)
+            .assertNoValues()
     }
 
     private data class TestObject(val id: String)
 
     private inner class CacheBuilder {
 
-        fun clear(): CacheBuilder {
+        private fun advanceTimeBy(value: Long, timeUnit: TimeUnit) {
+            whenever(timeUtils.milliseconds()).thenReturn(timeUnit.toMillis(value))
+        }
+
+        fun withoutValues(): CacheBuilder {
             cache.clear()
             return this
         }
 
-        fun addAll(testObjects: List<TestObject>): CacheBuilder {
+        fun withValues(testObjects: List<TestObject>): CacheBuilder {
             cache.putAll(testObjects)
             return this
         }
 
-        fun add(testObject: TestObject): CacheBuilder {
+        fun withValue(testObject: TestObject): CacheBuilder {
             cache.put(testObject)
             return this
         }
 
-        fun addAtTime(testObject: TestObject, time: Long): CacheBuilder {
-            nextCallTime(time)
+        fun thenAll(): TestObserver<List<TestObject>> {
+            advanceTimeBy(lifespanSeconds, TimeUnit.SECONDS)
+            return cache.getAll().test()
+        }
+
+        fun thenSingle(id: String): TestObserver<TestObject> {
+            advanceTimeBy(lifespanSeconds, TimeUnit.SECONDS)
+            return cache.get(id).test()
+        }
+
+        fun withValueAt(testObject: TestObject, value: Long, timeUnit: TimeUnit): CacheBuilder {
+            advanceTimeBy(value, timeUnit)
             cache.put(testObject)
             return this
         }
 
-        fun nextCallTime(time: Long): CacheBuilder {
-            whenever(timeUtils.milliseconds()).thenReturn(time)
-            return this
+        fun thenAllAt(value: Long, timeUnit: TimeUnit): TestObserver<List<TestObject>> {
+            advanceTimeBy(value, timeUnit)
+            return cache.getAll().test()
+        }
+
+        fun thenSingleAt(id: String, value: Long, timeUnit: TimeUnit): TestObserver<TestObject> {
+            advanceTimeBy(value, timeUnit)
+            return cache.get(id).test()
         }
     }
 }
