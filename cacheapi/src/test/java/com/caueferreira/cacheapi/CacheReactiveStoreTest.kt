@@ -83,9 +83,9 @@ class CacheReactiveStoreTest {
             .withValue(a)
             .withValue(b)
             .thenAll()
-            .assertValueCount(2)
+            .assertValueCount(1)
             .values()
-            .containsAll(ab)
+            .contains(ab)
     }
 
     @Test
@@ -93,9 +93,9 @@ class CacheReactiveStoreTest {
         CacheReactiveStoreBuilder()
             .withValues(zxy)
             .thenAll()
-            .assertValueCount(3)
+            .assertValueCount(1)
             .values()
-            .containsAll(zxy)
+            .contains(zxy)
     }
 
     @Test
@@ -122,9 +122,9 @@ class CacheReactiveStoreTest {
             .withValue(y)
             .replacingWith(ab)
             .thenAll()
-            .assertValueCount(2)
+            .assertValueCount(1)
             .values()
-            .containsAll(ab)
+            .contains(ab)
     }
 
     @Test
@@ -133,9 +133,9 @@ class CacheReactiveStoreTest {
             .withValues(ab)
             .replacingWith(zxy)
             .thenAll()
-            .assertValueCount(3)
+            .assertValueCount(1)
             .values()
-            .containsAll(zxy)
+            .contains(zxy)
     }
 
     @Test
@@ -171,7 +171,8 @@ class CacheReactiveStoreTest {
             .withValueAt(y, 10, TimeUnit.SECONDS)
             .thenAllAt(lifespanSeconds + 11, TimeUnit.SECONDS)
             .assertValueCount(1)
-            .assertValue(z)
+            .values()
+            .contains(arrayListOf(z))
     }
 
     @Test
@@ -214,7 +215,7 @@ class CacheReactiveStoreTest {
             return this
         }
 
-        fun thenAll(): TestObserver<TestObject> {
+        fun thenAll(): TestObserver<List<TestObject>> {
             advanceTimeBy(lifespanSeconds, TimeUnit.SECONDS)
             return cacheReactiveStore.all().test()
         }
@@ -230,7 +231,7 @@ class CacheReactiveStoreTest {
             return this
         }
 
-        fun thenAllAt(value: Long, timeUnit: TimeUnit): TestObserver<TestObject> {
+        fun thenAllAt(value: Long, timeUnit: TimeUnit): TestObserver<List<TestObject>> {
             advanceTimeBy(value, timeUnit)
             return cacheReactiveStore.all().test()
         }

@@ -4,7 +4,7 @@ import io.reactivex.Observable
 
 interface ReactiveStore<K, V> {
 
-    fun all(): Observable<V>
+    fun all(): Observable<List<V>>
     fun store(value: V)
     fun storeAll(values: List<V>)
     fun replace(values: List<V>)

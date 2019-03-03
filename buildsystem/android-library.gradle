@@ -13,12 +13,10 @@ android {
         versionCode application.versionCode
         versionName application.versionName
 
-
         minSdkVersion androidVersions.minSdkVersion
         targetSdkVersion androidVersions.targetSdkVersion
 
         buildConfigField "String", "THEMOVIEDATABASE_URL", themoviedatabase_endpoint_url
-        buildConfigField "String", "THEMOVIEDATABASE_API_KEY", themoviedatabase_api_key
     }
 
     buildTypes {
