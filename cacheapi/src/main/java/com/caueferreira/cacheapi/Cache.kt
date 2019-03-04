@@ -20,7 +20,7 @@ class Cache<K, V>(
     override fun put(value: V) {
         Observable.just(value)
             .subscribeOn(scheduler)
-            .subscribe { it -> cache[extractKey.apply(it)] = createEntry(it) }
+            .subscribe { cache[extractKey.apply(it)] = createEntry(it) }
     }
 
     override fun putAll(values: List<V>) {
@@ -36,7 +36,7 @@ class Cache<K, V>(
     }
 
     override fun getAll(): Maybe<List<V>> = Observable.fromIterable(cache.values)
-        .filter(::isExpired)
+        .filter(::isNotExpired)
         .map { it.value }
         .toList()
         .filter { it.isNotEmpty() }
@@ -47,13 +47,13 @@ class Cache<K, V>(
         Maybe.fromCallable { cache.containsKey(key) }
             .filter { isPresent -> isPresent }
             .map { cache[key] }
-            .filter(::isExpired)
+            .filter(::isNotExpired)
             .map { it.value }
             .subscribeOn(scheduler)
 
 
-    private fun isExpired(entry: CacheEntry<V>): Boolean =
-        entry.createdAt + lifespan > timeUtils.milliseconds()
+    private fun isNotExpired(entry: CacheEntry<V>): Boolean =
+        entry.createdAt + lifespan >= timeUtils.milliseconds()
 
     private fun createEntry(value: V): CacheEntry<V> = CacheEntry(value, timeUtils.milliseconds())
 
