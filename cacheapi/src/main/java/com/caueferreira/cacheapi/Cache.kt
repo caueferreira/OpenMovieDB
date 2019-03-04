@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 class Cache<K, V>(
     private val extractKey: Function<V, K>,
-    private val timeUtils: TimeUtils,
+    private val timeUtils: TimeUtils = TimeUtils(),
     private val lifespan: Long = TimeUnit.MINUTES.toMillis(5),
     private val scheduler: Scheduler = Schedulers.computation()
 ) : CacheInterface<K, V> {
