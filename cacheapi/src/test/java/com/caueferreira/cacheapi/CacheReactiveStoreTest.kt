@@ -1,6 +1,7 @@
 package com.caueferreira.cacheapi
 
-import com.nhaarman.mockitokotlin2.whenever
+import com.nhaarman.mockitokotlin2.*
+import io.reactivex.Maybe
 import io.reactivex.schedulers.Schedulers
 import org.junit.Before
 import org.mockito.MockitoAnnotations
@@ -8,15 +9,13 @@ import io.reactivex.functions.Function
 import io.reactivex.observers.TestObserver
 import org.junit.Test
 import org.mockito.Mock
-import java.util.concurrent.TimeUnit
 
 class CacheReactiveStoreTest {
 
     private lateinit var cacheReactiveStore: CacheReactiveStore<String, TestObject>
 
     @Mock
-    private lateinit var timeUtils: TimeUtils
-    private val lifespanSeconds = 5L
+    private lateinit var cache: Cache<String, TestObject>
 
     private val zxy = arrayListOf(
         TestObject("z"),
@@ -29,7 +28,6 @@ class CacheReactiveStoreTest {
         TestObject("b")
     )
 
-
     private val z = zxy[0]
     private val x = zxy[1]
     private val y = zxy[2]
@@ -40,13 +38,6 @@ class CacheReactiveStoreTest {
     @Before
     fun `before each test`() {
         MockitoAnnotations.initMocks(this)
-
-        var cache = Cache<String, TestObject>(
-            Function { it.id },
-            lifespan = TimeUnit.SECONDS.toMillis(lifespanSeconds),
-            timeUtils = timeUtils,
-            scheduler = Schedulers.trampoline()
-        )
 
         cacheReactiveStore = CacheReactiveStore(
             Function { it.id },
@@ -107,7 +98,6 @@ class CacheReactiveStoreTest {
             .assertValue(y)
     }
 
-
     @Test
     fun `add a value and search for another that is not present`() {
         CacheReactiveStoreBuilder()
@@ -139,106 +129,68 @@ class CacheReactiveStoreTest {
     }
 
     @Test
-    fun `add a value and search all when it is expired`() {
+    fun `add a value and search it`() {
         CacheReactiveStoreBuilder()
-            .withValueAt(x, 1, TimeUnit.SECONDS)
-            .thenAllAt(lifespanSeconds + 2, TimeUnit.SECONDS)
-            .assertNoValues()
-        cacheReactiveStore.get(x.id).test().assertNoValues()
-    }
-
-    @Test
-    fun `add a value and search it when it is expired`() {
-        CacheReactiveStoreBuilder()
-            .withValueAt(x, 1, TimeUnit.SECONDS)
-            .thenSingleAt(x.id, lifespanSeconds + 2, TimeUnit.SECONDS)
-            .assertNoValues()
-    }
-
-    @Test
-    fun `add a value and search it when it is not expired`() {
-        CacheReactiveStoreBuilder()
-            .withValueAt(x, 1, TimeUnit.SECONDS)
-            .thenSingleAt(x.id, 2, TimeUnit.SECONDS)
+            .withValue(x)
+            .thenSingle(x.id)
             .assertValue(x)
     }
 
     @Test
-    fun `add many values and search all when two are expired`() {
+    fun `add many values and search all`() {
         CacheReactiveStoreBuilder()
-            .withValueAt(x, 1, TimeUnit.SECONDS)
-            .withValueAt(z, 20, TimeUnit.SECONDS)
-            .withValueAt(y, 10, TimeUnit.SECONDS)
-            .thenAllAt(lifespanSeconds + 11, TimeUnit.SECONDS)
+            .withValue(x)
+            .withValue(z)
+            .withValue(y)
+            .thenAll()
             .assertValueCount(1)
             .values()
-            .contains(arrayListOf(z))
-    }
-
-    @Test
-    fun `add array of values and search when all are expired`() {
-        CacheReactiveStoreBuilder()
-            .withValues(zxy)
-            .thenAllAt(lifespanSeconds + 1, TimeUnit.SECONDS)
-            .assertNoValues()
-    }
-
-    @Test
-    fun `add array of values and replace, then search when all are expired`() {
-        CacheReactiveStoreBuilder()
-            .withValues(zxy)
-            .replacingWith(ab)
-            .thenAllAt(lifespanSeconds + 1, TimeUnit.SECONDS)
-            .assertNoValues()
+            .contains(zxy)
     }
 
     private data class TestObject(val id: String)
 
     private inner class CacheReactiveStoreBuilder {
 
-        private fun advanceTimeBy(value: Long, timeUnit: TimeUnit) {
-            whenever(timeUtils.milliseconds()).thenReturn(timeUnit.toMillis(value))
+        private fun buildWhenever(testObject: TestObject) {
+            whenever(cache.get(testObject.id)).thenReturn(Maybe.just(testObject))
+            whenever(cache.getAll()).thenReturn(Maybe.just(arrayListOf(testObject)))
+        }
+
+        private fun buildWhenever(testObjects: List<TestObject>) {
+            testObjects.forEach {
+                buildWhenever(it)
+            }
+            whenever(cache.getAll()).thenReturn(Maybe.just(testObjects))
         }
 
         fun withValue(testObject: TestObject): CacheReactiveStoreBuilder {
+            buildWhenever(testObject)
+
             cacheReactiveStore.store(testObject)
+            verify(cache, atLeastOnce()).put(any())
             return this
         }
 
         fun withValues(testObjects: List<TestObject>): CacheReactiveStoreBuilder {
+            buildWhenever(testObjects)
+
             cacheReactiveStore.storeAll(testObjects)
+            verify(cache, atLeastOnce()).putAll(any())
             return this
         }
 
         fun replacingWith(testObjects: List<TestObject>): CacheReactiveStoreBuilder {
+            buildWhenever(testObjects)
+
             cacheReactiveStore.replace(testObjects)
+            verify(cache, atLeastOnce()).clear()
+            verify(cache, atLeastOnce()).putAll(any())
             return this
         }
 
-        fun thenAll(): TestObserver<List<TestObject>> {
-            advanceTimeBy(lifespanSeconds, TimeUnit.SECONDS)
-            return cacheReactiveStore.all().test()
-        }
+        fun thenAll(): TestObserver<List<TestObject>> = cacheReactiveStore.all().test()
 
-        fun thenSingle(id: String): TestObserver<TestObject> {
-            advanceTimeBy(lifespanSeconds, TimeUnit.SECONDS)
-            return cacheReactiveStore.get(id).test()
-        }
-
-        fun withValueAt(testObject: TestObject, value: Long, timeUnit: TimeUnit): CacheReactiveStoreBuilder {
-            advanceTimeBy(value, timeUnit)
-            cacheReactiveStore.store(testObject)
-            return this
-        }
-
-        fun thenAllAt(value: Long, timeUnit: TimeUnit): TestObserver<List<TestObject>> {
-            advanceTimeBy(value, timeUnit)
-            return cacheReactiveStore.all().test()
-        }
-
-        fun thenSingleAt(id: String, value: Long, timeUnit: TimeUnit): TestObserver<TestObject> {
-            advanceTimeBy(value, timeUnit)
-            return cacheReactiveStore.get(id).test()
-        }
+        fun thenSingle(id: String): TestObserver<TestObject> = cacheReactiveStore.get(id).test()
     }
 }
