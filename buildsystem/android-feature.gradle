@@ -1,0 +1,38 @@
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    baseFeature true
+
+    def androidVersions = rootProject.ext.android
+    def application = rootProject.ext.app
+
+    compileSdkVersion androidVersions.compileSdkVersion
+    buildToolsVersion androidVersions.buildToolsVersion
+
+    defaultConfig {
+        testInstrumentationRunner application.testInstrumentationRunner
+        versionCode application.versionCode
+        versionName application.versionName
+
+        minSdkVersion androidVersions.minSdkVersion
+        targetSdkVersion androidVersions.targetSdkVersion
+
+        buildConfigField "String", "THEMOVIEDATABASE_API_KEY", themoviedatabase_api_key
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            testCoverageEnabled true
+        }
+
+        release {
+            proguardFiles 'proguard-rules.pro'
+        }
+    }
+
+    jacoco {
+        version = '0.8.2'
+    }
+}
