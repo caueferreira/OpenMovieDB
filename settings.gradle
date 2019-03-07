@@ -1,1 +1,1 @@
-include ':app', ':cacheapi', ':network'
+include ':app', ':cacheapi', ':network', ':movies'
