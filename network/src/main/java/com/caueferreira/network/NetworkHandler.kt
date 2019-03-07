@@ -1,27 +1,25 @@
 package com.caueferreira.network
 
 import com.google.gson.Gson
-import io.reactivex.Observable
-import io.reactivex.ObservableSource
-import io.reactivex.ObservableTransformer
+import io.reactivex.*
 import retrofit2.HttpException
 import java.io.InterruptedIOException
 import java.net.*
 import java.nio.channels.ClosedChannelException
 import javax.net.ssl.SSLException
 
-sealed class NetworkHandler<T> : ObservableTransformer<T, T> {
+sealed class NetworkHandler<T> : SingleTransformer<T, T> {
 
-    class HttpError<T> : ObservableTransformer<T, T> {
-        override fun apply(upstream: Observable<T>): ObservableSource<T> =
+    class HttpError<T> : SingleTransformer<T, T> {
+        override fun apply(upstream: Single<T>): SingleSource<T> =
             upstream
                 .onErrorResumeNext(::handleHttpError)
 
-        private fun handleHttpError(throwable: Throwable): Observable<T> =
+        private fun handleHttpError(throwable: Throwable): Single<T> =
             if (throwable is HttpException)
-                Observable.error(mapError(throwable))
+                Single.error(mapError(throwable))
             else
-                Observable.error(throwable)
+                Single.error(throwable)
 
         private fun mapError(httpException: HttpException) = when (httpException.code()) {
             401 -> NetworkErrors.Http.Unauthorized(fromHttpException(httpException))
@@ -42,16 +40,16 @@ sealed class NetworkHandler<T> : ObservableTransformer<T, T> {
         }
     }
 
-    class ConnectivityError<T> : ObservableTransformer<T, T> {
-        override fun apply(upstream: Observable<T>): ObservableSource<T> =
+    class ConnectivityError<T> : SingleTransformer<T, T> {
+        override fun apply(upstream: Single<T>): SingleSource<T> =
             upstream
                 .onErrorResumeNext(::handleConnectivityError)
 
-        private fun handleConnectivityError(throwable: Throwable): Observable<T> =
+        private fun handleConnectivityError(throwable: Throwable): Single<T> =
             if (hasConnectivityIssue(throwable))
-                Observable.error(mapError(throwable))
+                Single.error(mapError(throwable))
             else
-                Observable.error(throwable)
+                Single.error(throwable)
 
         private fun mapError(throwable: Throwable): NetworkErrors.Connectivity = when (throwable) {
             is SocketTimeoutException -> NetworkErrors.Connectivity.Timeout

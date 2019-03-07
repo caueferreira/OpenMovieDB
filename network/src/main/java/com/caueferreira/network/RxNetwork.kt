@@ -1,7 +1,7 @@
 package com.caueferreira.network
 
-import io.reactivex.Observable
+import io.reactivex.Single
 
-fun Observable<Any>.handleNetworkErrors(): Observable<Any> =
+fun <T> Single<T>.handleNetworkErrors(): Single<T> =
     this.compose(NetworkHandler.ConnectivityError())
         .compose(NetworkHandler.HttpError())
