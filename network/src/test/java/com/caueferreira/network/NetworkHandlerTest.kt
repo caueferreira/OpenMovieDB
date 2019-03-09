@@ -1,6 +1,7 @@
 package com.caueferreira.network
 
 import io.reactivex.Observable
+import io.reactivex.Single
 import io.reactivex.observers.TestObserver
 import okhttp3.MediaType
 import okhttp3.ResponseBody
@@ -139,18 +140,18 @@ class NetworkHandlerTest {
     }
 
     private inner class NetworkHandlerBuilder {
-        private lateinit var stream: Observable<Any>
+        private lateinit var stream: Single<Any>
 
         fun stream(): TestObserver<Any> = stream.handleNetworkErrors().test()
 
         fun withException(throwable: Throwable): NetworkHandlerBuilder {
-            stream = Observable.error(throwable)
+            stream = Single.error(throwable)
             return this
         }
 
         fun withApiError(message: String, statusCode: Int): NetworkHandlerBuilder {
             val apiMessage = """{"code":$statusCode ,"message": "$message"}"""
-            stream = Observable.error(httpException<Any>(apiMessage, statusCode))
+            stream = Single.error(httpException<Any>(apiMessage, statusCode))
             return this
         }
 

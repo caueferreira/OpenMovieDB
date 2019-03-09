@@ -1,0 +1,29 @@
+apply plugin: 'com.android.feature'
+apply plugin: 'kotlin-android'
+apply from: '../buildsystem/android-feature.gradle'
+
+dependencies {
+    def commonDependencies = rootProject.ext.commonDependencies
+    def commonTestDependencies = rootProject.ext.commonTestDependencies
+
+    implementation project(":network")
+    implementation project(":cacheapi")
+
+    implementation commonDependencies.kotlinStdlib
+    implementation commonDependencies.supportAppCompatV7
+
+    api commonDependencies.rxJava2
+    api commonDependencies.rxAndroid
+
+    api commonDependencies.retrofit2
+
+    testImplementation commonTestDependencies.junit
+    testImplementation commonTestDependencies.mockito
+
+    androidTestImplementation commonTestDependencies.runner
+    androidTestImplementation commonTestDependencies.espresso
+}
+
+repositories {
+    mavenCentral()
+}
