@@ -1,6 +1,8 @@
 package com.caueferreira.movies.domain
 
+import android.net.Network
 import com.caueferreira.movies.data.MoviesRepository
+import com.caueferreira.network.NetworkErrors
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
@@ -13,6 +15,7 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.Mockito
+import java.net.SocketTimeoutException
 
 
 class RetrieveMoviesListTest {
@@ -90,7 +93,26 @@ class RetrieveMoviesListTest {
     @Test
     fun `propagate unhandled error`() {
 
-        val throwable = Mockito.mock(Throwable::class.java)
+        val throwable = Mockito.mock(ArrayIndexOutOfBoundsException::class.java)
+
+        GetMoviesListBuilder()
+            .emitEmpty()
+            .withFetchError(throwable)
+            .thenReturn()
+
+        retrieveMoviesList.movies().subscribe(stream)
+
+        stream.assertError(throwable)
+            .assertNoValues()
+
+        verify(moviesRepository, times(1)).fetch()
+        verify(moviesRepository, times(1)).all()
+    }
+
+    @Test
+    fun `propagate handled error`(){
+        val throwable = mock<Throwable> { NetworkErrors.Connectivity.BadConnection }
+
         GetMoviesListBuilder()
             .emitEmpty()
             .withFetchError(throwable)
