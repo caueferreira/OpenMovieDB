@@ -40,7 +40,7 @@ class CacheReactiveStore<K, V>(
     }
 
     override fun all(): Observable<List<V>> =
-        Observable.defer { stream.startWith(cache.getAll().toObservable()) }
+        Observable.defer { stream.startWith(cache.getAll().defaultIfEmpty(listOf()).toObservable()) }
             .observeOn(scheduler)
 
     override fun get(key: K): Observable<V> =
