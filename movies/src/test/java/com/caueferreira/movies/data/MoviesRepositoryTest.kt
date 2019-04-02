@@ -100,7 +100,7 @@ class MoviesRepositoryTest {
         MoviesRepositoryBuilder()
             .withSingleDataFromStore(emptyStream)
             .thenSingle(any())
-            .assertOf { it == emptyStream }
+            .assertNoValues()
 
         verify(cacheReactiveStore, times(1)).get(any())
         verify(transformer, never()).apply(any())
@@ -160,6 +160,20 @@ class MoviesRepositoryTest {
             .thenFetch()
             .test()
             .assertError(NetworkErrors.Connectivity.BadConnection)
+
+        verify(service, times(1)).movies()
+        verify(cacheReactiveStore, never()).storeAll(any())
+        verify(transformer, never()).apply(any())
+    }
+
+    @Test
+    fun `when fetch throw unhandled error`() {
+        val error = ArrayIndexOutOfBoundsException()
+        MoviesRepositoryBuilder()
+            .withServiceError(error)
+            .thenFetch()
+            .test()
+            .assertError(error)
 
         verify(service, times(1)).movies()
         verify(cacheReactiveStore, never()).storeAll(any())
